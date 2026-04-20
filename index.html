@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Investment - VIP Moçambique</title>
+    <style>
+        :root {
+            --primary: #32cd32;
+            --dark-bg: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #ffa500;
+            --text: #ffffff;
+            --vip-active: #ffd700;
+            --success-bg: rgba(0, 100, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container { width: 100%; max-width: 450px; min-height: 100vh; position: relative; padding-bottom: 80px; }
+        .screen { display: none; padding: 20px; box-sizing: border-box; }
+        .active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Notificações de Transações */
+        .fake-transactions-container {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 200px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .fake-item {
+            background: linear-gradient(135deg, #00b4db, #00ff87); 
+            color: #000;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            animation: slideInRight 0.5s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+
+        button { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; outline: none; border: none; }
+        button:active { transform: scale(0.92); filter: brightness(1.2); }
+
+        input { 
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; 
+            border: 1px solid #333; background: #252525; color: #fff; box-sizing: border-box; 
+            font-size: 16px;
+        }
+
+        .btn-principal { 
+            background: linear-gradient(45deg, #7cfc00, var(--primary)); 
+            color: #000; padding: 15px; border-radius: 10px; 
+            font-weight: bold; width: 100%; margin-top: 15px; 
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3);
+        }
+
+        header { background: linear-gradient(to bottom, #7cfc00, #32cd32); padding: 25px; text-align: center; border-radius: 0 0 30px 30px; color: #000; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .stat-card { background: var(--card-bg); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333; }
+        
+        #vip-container { display: flex; flex-direction: column; gap: 18px; margin-top: 20px; }
+
+        .vip-card {
+            background: linear-gradient(145deg, #1a1a1a, #252525);
+            border-radius: 20px; padding: 20px; display: flex;
+            flex-direction: column; gap: 12px; border: 1px solid #333;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5); position: relative; transition: 0.3s;
+        }
+
+        .active-plan { border: 1.5px solid var(--primary); background: #222; }
+        .active-badge { position: absolute; top: -10px; left: 20px; background: var(--primary); color: #000; font-size: 10px; font-weight: bold; padding: 3px 12px; border-radius: 20px; z-index: 5; }
+
+        .vip-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .vip-badge-roi { 
+            background: rgba(50, 205, 50, 0.15); color: var(--primary); 
+            font-size: 10px; padding: 4px 10px; border-radius: 6px; 
+            border: 1px solid rgba(50, 205, 50, 0.3); font-weight: bold;
+        }
+
+        .vip-info b { color: var(--vip-active); font-size: 19px; display: block; margin-bottom: 2px; }
+        .vip-info span { color: var(--primary); font-size: 14px; font-weight: bold; }
+
+        .btn-invest { 
+            background: #32cd32; color: #000; padding: 14px; border-radius: 12px; 
+            font-weight: bold; font-size: 14px; width: 100%; border-bottom: 4px solid #228b22;
+        }
+
+        .btn-disabled { background: #444 !important; border-bottom: 4px solid #222 !important; color: #888 !important; cursor: default; transform: none !important; }
+
+        .pay-card {
+            padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; 
+            align-items: center; justify-content: space-between; border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+        .copy-chip { background: rgba(255,255,255,0.2); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; }
+
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #1e1e1e; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 100; }
+        .nav-item { font-size: 11px; text-align: center; cursor: pointer; color: #888; flex: 1; transition: 0.2s; }
+        .nav-item:active { transform: scale(0.8); color: var(--primary); }
+
+        .live-transactions { background: var(--success-bg); border-radius: 15px; padding: 15px; margin-top: 25px; border: 1px solid rgba(50, 205, 50, 0.3); height: 115px; overflow: hidden; }
+        
+        /* Estilo para lista de membros no Admin */
+        .member-card { background: #252525; padding: 12px; margin-bottom: 10px; border-radius: 10px; border-left: 4px solid var(--primary); text-align: left; }
+        .member-card p { margin: 2px 0; font-size: 12px; color: #ccc; }
+        .btn-mini { padding: 6px 12px; font-size: 10px; border-radius: 5px; margin-top: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="fake-notifications" class="fake-transactions-container"></div>
+
+<div class="container">
+    
+    <div id="screen-login" class="screen active">
+        <div style="text-align: center; margin-top: 40px;">
+            <h1 style="color: var(--primary); letter-spacing: 2px;">CAT INVESTMENT</h1>
+            <p style="color: #888; font-size: 13px;">Inicie sua jornada lucrativa</p>
+            <input type="text" id="reg-phone" placeholder="Número de Telefone">
+            <input type="password" id="reg-pass" placeholder="Sua Senha">
+            <div id="new-user-fields">
+                <input type="text" id="reg-name" placeholder="Nome Completo">
+            </div>
+            <button class="btn-principal" onclick="handleAuth()">ENTRAR NO PAINEL</button>
+            <p onclick="showScreen('screen-forgot')" style="color: var(--accent); font-size: 12px; cursor: pointer; margin-top: 15px; font-weight: bold;">Esqueceu sua senha?</p>
+            <div class="live-transactions"><div id="ticker-content"></div></div>
+        </div>
+    </div>
+
+    <div id="screen-forgot" class="screen">
+        <h2 style="color: var(--primary); text-align: center;">RECUPERAR ACESSO</h2>
+        <p style="color: #888; font-size: 13px; text-align: center; padding: 0 10px;">Insira seu número para solicitar a redefinição ao nosso suporte via WhatsApp.</p>
+        <input type="text" id="forgot-phone" placeholder="Seu número cadastrado">
+        <button class="btn-principal" onclick="requestReset()">SOLICITAR AO SUPORTE</button>
+        <button onclick="showScreen('screen-login')" style="background: transparent; color: #888; margin-top: 10px; width: 100%;">Voltar ao Login</button>
+    </div>
+
+    <div id="screen-admin" class="screen">
+        <h2 style="color: var(--primary); text-align: center;">GERÊNCIA</h2>
+        <div id="admin-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+            <button onclick="renderAdminLogs('deposits')" style="font-size: 9px; background: #32cd32; color: #000; border-radius: 8px; padding: 10px; font-weight: bold;">DEPÓSITOS</button>
+            <button onclick="renderAdminLogs('withdraws')" style="font-size: 9px; background: #ffa500; color: #000; border-radius: 8px; padding: 10px; font-weight: bold;">SAQUES</button>
+            <button onclick="renderAdminMembers()" style="font-size: 9px; background: #00b4db; color: #fff; border-radius: 8px; padding: 10px; font-weight: bold;">MEMBROS</button>
+        </div>
+        <div id="admin-list" style="margin-top: 20px; text-align: center;"></div>
+        <button onclick="showScreen('screen-main')" style="background: #444; color: #fff; margin-top: 20px; border-radius: 8px; width: 100%; padding: 10px;">SAIR DO ADM</button>
+    </div>
+
+    <div id="screen-main" class="screen">
+        <header>
+            <div onclick="handleAdminTrigger()" style="font-weight: bold; font-size: 20px; cursor: pointer;">CAT INVESTMENT</div>
+            <p id="welcome-msg" style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold;"></p>
+        </header>
+        <div class="stats">
+            <div class="stat-card">Saldo Disponível<br><span id="user-balance" style="color: var(--primary); font-weight: bold; font-size: 18px;">MT 0,00</span></div>
+            <div class="stat-card">Renda Diária<br><span id="daily-info" style="color: var(--primary); font-weight: bold; font-size: 18px;">MT 0,00</span></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <button onclick="showScreen('screen-deposit')" style="background: #252525; color: #fff; font-size: 10px; border: 1px solid #444; border-radius: 8px; padding: 10px;">DEPOSITAR</button>
+            <button onclick="showScreen('screen-withdraw')" style="background: #252525; color: #fff; font-size: 10px; border: 1px solid #444; border-radius: 8px; padding: 10px;">LEVANTAR</button>
+            <button onclick="doTask()" style="background: var(--accent); color: #000; font-size: 10px; font-weight: bold; border-radius: 8px; padding: 10px;">TAREFA</button>
+        </div>
+        <div id="vip-container"></div>
+    </div>
+
+    <div id="screen-invite" class="screen">
+        <h2 style="color: var(--primary); text-align: center;">CONVIDAR</h2>
+        <div class="stat-card" style="margin-bottom: 20px; border: 1px solid var(--primary);">
+            <p style="font-size: 12px; color: #888;">Sua Comissão Vitalícia</p>
+            <b style="font-size: 22px; color: var(--primary);">GANHE 10% DE BÓNUS</b>
+        </div>
+        <p style="font-size: 13px; color: #bbb; text-align: center;">Ex: Amigo depositou 1000 MT, você ganha 100 MT na hora!</p>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px dashed var(--primary); margin-top: 15px; text-align: center;">
+            <div style="word-break: break-all; font-size: 13px; color: var(--primary); font-weight: bold;" id="invite-link-text">Gerando link...</div>
+        </div>
+        <button class="btn-principal" onclick="copyInviteLink()">COPIAR MEU LINK</button>
+        <button onclick="showScreen('screen-main')" style="background: transparent; color: #888; margin-top: 10px; width: 100%;">Voltar</button>
+    </div>
+
+    <div id="screen-deposit" class="screen">
+        <h2 style="color: var(--primary); text-align: center;">DEPÓSITO</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button onclick="setDepositMethod('mpesa')" style="flex: 1; padding: 12px; border-radius: 12px; background: #8b0000; color: white; font-weight: bold; font-size: 12px;">M-PESA</button>
+            <button onclick="setDepositMethod('emola')" style="flex: 1; padding: 12px; border-radius: 12px; background: #ff6600; color: white; font-weight: bold; font-size: 12px;">E-MOLA</button>
+        </div>
+        <div id="pay-card-area" class="pay-card" style="display: none; flex-direction: column; align-items: center; gap: 5px; padding: 20px;" onclick="copyCurrentNumber()">
+            <div style="color: #fff; font-size: 16px;"><b id="display-method-name">MÉTODO</b>: <span id="display-number">000000000</span></div>
+            <div id="display-holder" style="font-size: 11px; color: rgba(255,255,255,0.8);">TITULAR</div>
+            <div class="copy-chip">CLIQUE PARA COPIAR</div>
+        </div>
+        <input type="number" id="dep-amount" placeholder="Valor enviado (MT)">
+        <button class="btn-principal" onclick="submitDeposit()">CONFIRMAR ENVIO</button>
+        <button onclick="showScreen('screen-main')" style="background: transparent; color: #888; margin-top: 10px; width: 100%;">Cancelar</button>
+    </div>
+
+    <div id="screen-withdraw" class="screen">
+        <h2 style="color: var(--primary); text-align: center;">LEVANTAMENTO</h2>
+        <div style="background: rgba(255,165,0,0.1); padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--accent);">
+            <p style="font-size: 11px; color: var(--accent); margin: 0; text-align: center;">
+                ⚠️ <b>TAXA ADMINISTRATIVA: 5%</b><br>
+                A taxa será deduzida automaticamente do seu saldo.
+            </p>
+        </div>
+        <input type="number" id="withdraw-amount" placeholder="Valor (Mín 100 MT)">
+        <input type="text" id="withdraw-number" placeholder="Número M-Pesa / E-Mola">
+        <button class="btn-principal" style="background: var(--accent);" onclick="submitWithdraw()">PEDIR SAQUE</button>
+        <button onclick="showScreen('screen-main')" style="background: transparent; color: #888; margin-top: 10px; width: 100%;">Voltar</button>
+    </div>
+
+    <nav class="nav-bar" id="main-nav" style="display:none">
+        <div class="nav-item" onclick="showScreen('screen-main')">🏠<br>Home</div>
+        <div class="nav-item" onclick="showScreen('screen-invite')">👥<br>Convidar</div>
+        <div class="nav-item" onclick="contactSupport()">🎧<br>Suporte</div>
+        <div class="nav-item" onclick="location.reload()">👤<br>Sair</div>
+    </nav>
+
+</div>
+
+<script>
+    const planosVip = [
+        {v: 500, l: 25}, {v: 700, l: 35}, {v: 1000, l: 50}, {v: 1300, l: 65},
+        {v: 1600, l: 80}, {v: 2000, l: 100}, {v: 3000, l: 150}, {v: 4000, l: 200},
+        {v: 5000, l: 250}, {v: 7000, l: 350}, {v: 10000, l: 500}, {v: 15000, l: 750},
+        {v: 20000, l: 1000}, {v: 25000, l: 1250}, {v: 30000, l: 1500}, {v: 35000, l: 1750}
+    ];
+
+    const depositSettings = {
+        mpesa: { name: "M-PESA", number: "851511841", holder: "Benjamim Celeste", color: "#8b0000" },
+        emola: { name: "E-MOLA", number: "870514180", holder: "Amelia Ricardo", color: "#ff6600" }
+    };
+
+    let currentUser = null;
+    let adminClicks = 0;
+    let selectedMethod = null;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'screen-invite' && currentUser) {
+            document.getElementById('invite-link-text').innerText = `${window.location.origin}${window.location.pathname}?ref=${currentUser.phone}`;
+        }
+        updateUI();
+    }
+
+    function contactSupport() { window.open('https://wa.me/258851511841', '_blank'); }
+
+    // --- LÓGICA DE RECUPERAÇÃO DE SENHA ---
+    function requestReset() {
+        const phone = document.getElementById('forgot-phone').value;
+        let db = JSON.parse(localStorage.getItem('cat_db')) || {};
+        if (!phone) return alert("Digite seu número.");
+        if (!db[phone]) return alert("Número não encontrado no sistema.");
+        
+        const msg = `Olá Admin, esqueci minha senha da Cat Investment. Meu número de conta é: ${phone}. Pode redefinir para mim?`;
+        window.open(`https://wa.me/258851511841?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // --- PAINEL ADMIN: GESTÃO DE MEMBROS ---
+    function renderAdminMembers() {
+        const list = document.getElementById('admin-list');
+        const db = JSON.parse(localStorage.getItem('cat_db')) || {};
+        list.innerHTML = "<h4 style='color:var(--primary)'>LISTA DE UTILIZADORES</h4>";
+        
+        if(Object.keys(db).length === 0) { list.innerHTML += "<p>Nenhum membro cadastrado.</p>"; return; }
+
+        Object.values(db).forEach(u => {
+            list.innerHTML += `
+                <div class="member-card">
+                    <p><b>Nome:</b> ${u.name}</p>
+                    <p><b>Telefone:</b> ${u.phone}</p>
+                    <p><b>Saldo:</b> MT ${parseFloat(u.balance).toFixed(2)}</p>
+                    <p><b>Senha Atual:</b> <span style="color:var(--accent); font-weight:bold;">${u.pass}</span></p>
+                    <button class="btn-mini" style="background:#ffa500; color:#000;" onclick="adminChangePass('${u.phone}')">ALTERAR SENHA</button>
+                    <button class="btn-mini" style="background:#ff4444; color:white;" onclick="adminDeleteUser('${u.phone}')">APAGAR CONTA</button>
+                </div>`;
+        });
+    }
+
+    function adminChangePass(phone) {
+        const nova = prompt("Insira a nova senha para este utilizador:");
+        if(!nova) return;
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        db[phone].pass = nova;
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        renderAdminMembers();
+        alert("Senha atualizada!");
+    }
+
+    function adminDeleteUser(phone) {
+        if(!confirm("Deseja mesmo eliminar este membro?")) return;
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        delete db[phone];
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        renderAdminMembers();
+        updateAdminStats();
+    }
+
+    // --- FUNÇÕES DE AUTH E CORE ---
+    function handleAuth() {
+        const phone = document.getElementById('reg-phone').value;
+        const pass = document.getElementById('reg-pass').value;
+        const name = document.getElementById('reg-name').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+
+        let db = JSON.parse(localStorage.getItem('cat_db')) || {};
+        if (db[phone]) {
+            if (db[phone].pass === pass) { currentUser = db[phone]; loginSuccess(); }
+            else alert("Senha incorreta!");
+        } else {
+            if (!name) return alert("Por favor, preencha o Nome Completo para criar conta.");
+            db[phone] = { phone, pass, name, balance: 0, activeVip: 0, lastCollect: 0, invitedBy: ref };
+            localStorage.setItem('cat_db', JSON.stringify(db));
+            currentUser = db[phone]; loginSuccess();
+        }
+    }
+
+    function loginSuccess() {
+        document.getElementById('main-nav').style.display = 'flex';
+        document.getElementById('welcome-msg').innerText = `Bem-vindo, ${currentUser.name}`;
+        showScreen('screen-main');
+        renderVips();
+        updateUI();
+    }
+
+    function updateUI() {
+        if(!currentUser) return;
+        const db = JSON.parse(localStorage.getItem('cat_db')) || {};
+        currentUser = db[currentUser.phone];
+        document.getElementById('user-balance').innerText = `MT ${parseFloat(currentUser.balance).toFixed(2)}`;
+        const p = planosVip.find(v => v.v === currentUser.activeVip);
+        document.getElementById('daily-info').innerText = p ? `MT ${p.l.toFixed(2)}` : "MT 0,00";
+    }
+
+    function renderVips() {
+        const container = document.getElementById('vip-container');
+        container.innerHTML = "";
+        planosVip.forEach(p => {
+            const isAtivo = currentUser.activeVip === p.v;
+            const isInferior = currentUser.activeVip > p.v;
+            container.innerHTML += `
+                <div class="vip-card ${isAtivo ? 'active-plan' : ''}" style="${isInferior ? 'opacity: 0.5; filter: grayscale(1);' : ''}">
+                    ${isAtivo ? '<div class="active-badge">SEU PLANO</div>' : ''}
+                    <div class="vip-header">
+                        <div class="vip-info"><b>Cat VIP MT ${p.v}</b><span>Renda: MT ${p.l.toFixed(2)} / dia</span></div>
+                    </div>
+                    <button class="btn-invest ${isAtivo || isInferior ? 'btn-disabled' : ''}" onclick="${isAtivo || isInferior ? '' : `buyVip(${p.v})`}">${isAtivo ? 'ATIVO' : 'ATIVAR'}</button>
+                </div>`;
+        });
+    }
+
+    function buyVip(valor) {
+        if (parseFloat(currentUser.balance) < valor) return alert("Saldo insuficiente!");
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        currentUser.balance -= valor;
+        currentUser.activeVip = valor;
+        db[currentUser.phone] = currentUser;
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        updateUI(); renderVips();
+        alert("Plano VIP ativado com sucesso!");
+    }
+
+    function doTask() {
+        if(!currentUser.activeVip) return alert("Ative um VIP primeiro!");
+        const agora = Date.now();
+        if (currentUser.lastCollect && (agora - currentUser.lastCollect < 86400000)) return alert("Você já coletou hoje. Volte em 24h!");
+        const plano = planosVip.find(p => p.v === currentUser.activeVip);
+        currentUser.balance = (parseFloat(currentUser.balance) || 0) + plano.l;
+        currentUser.lastCollect = agora;
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        db[currentUser.phone] = currentUser;
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        updateUI();
+        alert(`Sucesso! Recebeu MT ${plano.l.toFixed(2)}`);
+    }
+
+    // --- DEPÓSITOS E SAQUES ---
+    function setDepositMethod(method) {
+        selectedMethod = method;
+        const config = depositSettings[method];
+        document.getElementById('pay-card-area').style.display = 'flex';
+        document.getElementById('pay-card-area').style.background = config.color;
+        document.getElementById('display-number').innerText = config.number;
+        document.getElementById('display-holder').innerText = "Titular: " + config.holder;
+    }
+
+    function submitDeposit() {
+        const amt = document.getElementById('dep-amount').value;
+        if(!selectedMethod || !amt) return alert("Preencha o valor e selecione o método.");
+        saveLog('deposits', amt, currentUser.phone, `${currentUser.name} [${depositSettings[selectedMethod].name}]`);
+        alert("Enviado para análise!"); 
+        showScreen('screen-main');
+    }
+
+    function submitWithdraw() {
+        const amt = parseFloat(document.getElementById('withdraw-amount').value);
+        const num = document.getElementById('withdraw-number').value;
+        if (!amt || amt < 100) return alert("Mínimo 100 MT");
+        const taxa = amt * 0.05;
+        const total = amt + taxa;
+        if (total > currentUser.balance) return alert(`Saldo insuficiente. Você precisa de MT ${total.toFixed(2)} para cobrir a taxa.`);
+        currentUser.balance -= total;
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        db[currentUser.phone].balance = currentUser.balance;
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        saveLog('withdraws', amt, currentUser.phone, `${currentUser.name} (Destino: ${num})`);
+        updateUI(); 
+        alert("Pedido de saque enviado!");
+        showScreen('screen-main');
+    }
+
+    function saveLog(type, amount, phone, name) {
+        let logs = JSON.parse(localStorage.getItem('cat_logs')) || [];
+        logs.push({ id: Date.now().toString(), type, amount, phone, name, status: 'pendente' });
+        localStorage.setItem('cat_logs', JSON.stringify(logs));
+    }
+
+    // --- GESTÃO ADMIN ---
+    function handleAdminTrigger() {
+        adminClicks++;
+        if(adminClicks === 5) {
+            const p = prompt("Senha Mestra:");
+            if(p === "ben@jami%mcel%este87") { updateAdminStats(); showScreen('screen-admin'); }
+            adminClicks = 0;
+        }
+        setTimeout(() => adminClicks = 0, 3000);
+    }
+
+    function updateAdminStats() {
+        const db = JSON.parse(localStorage.getItem('cat_db')) || {};
+        let total = 0; Object.values(db).forEach(u => total += u.balance);
+        document.getElementById('admin-stats-grid').innerHTML = `
+            <div class="stat-card">MEMBROS<br><b>${Object.keys(db).length}</b></div>
+            <div class="stat-card">SALDO TOTAL<br><b>MT ${total.toFixed(0)}</b></div>`;
+    }
+
+    function renderAdminLogs(type) {
+        const list = document.getElementById('admin-list');
+        const logs = JSON.parse(localStorage.getItem('cat_logs')) || [];
+        const filtered = logs.filter(l => l.type === type && l.status === 'pendente');
+        list.innerHTML = `<h4>PEDIDOS DE ${type.toUpperCase()}</h4>`;
+        filtered.forEach(item => {
+            list.innerHTML += `<div style="background:#333; padding:10px; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px;">${item.name}<br><b>MT ${item.amount}</b></div>
+                <button onclick="processAdminAction('${item.id}', true)" style="background:green; color:white; padding:5px; border-radius:4px;">APROVAR</button>
+            </div>`;
+        });
+    }
+
+    function processAdminAction(id, approved) {
+        let db = JSON.parse(localStorage.getItem('cat_db'));
+        let logs = JSON.parse(localStorage.getItem('cat_logs'));
+        let log = logs.find(l => l.id === id);
+        
+        if(approved && log.type === 'deposits') {
+            db[log.phone].balance += parseFloat(log.amount);
+            // Bónus de convite 10%
+            const inviter = db[log.phone].invitedBy;
+            if(inviter && db[inviter]) db[inviter].balance += (parseFloat(log.amount) * 0.10);
+        }
+        log.status = approved ? 'aprovado' : 'rejeitado';
+        localStorage.setItem('cat_db', JSON.stringify(db));
+        localStorage.setItem('cat_logs', JSON.stringify(logs));
+        alert("Ação realizada!");
+        renderAdminLogs(log.type);
+        updateAdminStats();
+    }
+
+    function triggerFakeTransaction() {
+        const container = document.getElementById('fake-notifications');
+        const nomes = ["Zito M.", "Sérgio W.", "Marta G.", "Nelson B.", "Amélia R."];
+        const item = document.createElement('div');
+        item.className = 'fake-item';
+        item.innerHTML = `✅ ${nomes[Math.floor(Math.random()*nomes.length)]} recebeu MT ${(Math.random()*1500+50).toFixed(2)}`;
+        container.prepend(item);
+        setTimeout(() => item.remove(), 3000);
+    }
+
+    window.onload = () => setInterval(triggerFakeTransaction, 5000);
+</script>
+</body>
+</html>
